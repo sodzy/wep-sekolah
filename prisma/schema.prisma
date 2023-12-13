@@ -1,0 +1,259 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id  String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String @db.ObjectId
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.String
+  access_token       String?  @db.String
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.String
+  session_state      String?
+
+  user Teacher @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id  String  @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String @db.ObjectId
+  expires      DateTime
+  user         Teacher     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// model User {
+//   id  String  @id @default(auto()) @map("_id") @db.ObjectId
+//   name String @unique
+//   date_of_birth String?
+//   telp String?
+//   email         String?   
+//   nip String?
+//   ijazah String?
+//   positionName String?
+//   position Position? @relation(fields: [positionName],references: [positionName])
+//   hashedPassword String?
+//   period_work String?
+//   gender String?
+//   age String?
+//   status String?
+//   imageUrl String?
+//   role          String?
+//   absensi Absensi[]
+//   accounts      Account[]
+//   sessions      Session[]
+// }
+
+model VerificationToken {
+  id  String  @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Events {
+    id  String  @id @default(auto()) @map("_id") @db.ObjectId
+    title String
+    description String
+    person_responsible String
+    telp_person_responsible String?
+    place_event String?
+    date_event String?
+    section String?
+    imageUrl String?
+    publicId String?
+    catName String?
+    total_cost String?
+    status String?
+    category Category? @relation(fields: [catName],references: [catName])
+    // author User @relation(fields: [authorEmail],references: [email])
+    // authorEmail String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Category {
+     id  String  @id @default(auto()) @map("_id") @db.ObjectId
+     catName String @unique
+     events Events[]
+     eventIDs String[] @db.ObjectId
+}
+
+
+model Teacher {
+    id  String  @id @default(auto()) @map("_id") @db.ObjectId
+    name String @unique
+    date_of_birth String
+    telp String
+    email String?
+    nip String?
+    ijazah String?
+    role String?
+    Role Role? @relation(fields: [role],references: [name])
+    hashedPassword String?
+    period_work String?
+    gender String?
+    age String?
+    status String?
+    imageUrl String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    absensi Absensi[]
+    accounts      Account[]
+    sessions      Session[]
+}
+
+model Role {
+     id  String  @id @default(auto()) @map("_id") @db.ObjectId
+     name   String @unique
+     teachers Teacher[]
+     teacherIDs String[] @db.ObjectId
+}
+
+
+model Student {
+    id  String  @id @default(auto()) @map("_id") @db.ObjectId
+    name String? @unique
+    date_of_birth String?
+    ijazah String?
+    gender String?
+    nisn String?
+    guardian_name String?
+    guardian_status String?
+    guardian_telp String
+    guardian_email String?
+    status_payment String?
+    address String?
+    levelName String?
+    level Level? @relation(fields: [levelName], references: [name])
+    className String?
+    class Class? @relation(fields: [className], references: [className])
+    classTypeName String?
+    classType ClassType? @relation(fields: [classTypeName], references: [classTypeName])
+    image String?
+    recapitulation Recapitulation[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+ 
+
+model Recapitulation {
+     id  String  @id @default(auto()) @map("_id") @db.ObjectId
+     date String?
+     lesson String?
+     Lesson Lesson? @relation(fields: [lesson],references: [name])
+     student String?
+     Student Student? @relation(fields: [student],references: [name])
+     present Boolean
+     presentAt DateTime @default(now())
+}
+
+
+model RecapitulationAbsensi {
+    id  String  @id @default(auto()) @map("_id") @db.ObjectId
+    
+}
+
+model Class {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  className  String   @unique
+  classType ClassType[]
+  levelName  String?
+  level      Level?   @relation(fields: [levelName], references: [name])
+  students   Student[]
+  absensi Absensi[]
+  studentIDs String[] @db.ObjectId
+}
+
+model ClassType {
+   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+   classTypeName String @unique
+   className String?
+   class Class? @relation(fields: [className], references: [className])
+   students Student[]
+   absensi  Absensi[]
+}
+
+model Lesson {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+  levelName  String?
+  level      Level?   @relation(fields: [levelName], references: [name])
+  recapitulation Recapitulation[]
+}
+
+
+model Level {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name String   @unique
+  class     Class[]
+  students  Student[]
+  lesson Lesson[]
+  classtIDs String[] @db.ObjectId
+}
+
+
+model Absensi {
+   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+   levelName String 
+   className String 
+   class      Class?   @relation(fields: [className], references: [className])
+   classTypeName String?
+   classType ClassType?   @relation(fields: [classTypeName], references: [classTypeName])
+   teacher String?
+   Teacher Teacher? @relation(fields: [teacher],references: [name])
+   lesson String
+   start_time String
+   end_time  String
+}
+
+
+
+
+model Product {
+      id        String   @id @default(auto()) @map("_id") @db.ObjectId
+      name_product String
+      price_product Int
+      data      StrukInput?   @relation(fields: [name_product], references: [name_product])
+}
+
+model StrukInput {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    name_product String @unique
+    product Product[]
+    total_buy Int
+    total_price_product Int
+}
+
+
+model StrukOutput {
+      id        String   @id @default(auto()) @map("_id") @db.ObjectId
+      name_company String
+      address_copany String
+      npwp String
+      time_transaction DateTime
+      code_transaction String
+      kasir String
+      pos_kasir String
+      price_sell Int
+      total Int
+}
+
+
